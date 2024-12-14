@@ -1,0 +1,61 @@
+server:
+  port: 80
+
+spring:
+
+  # konfigurasi untuk koneksi db
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+    # sesuaikan nama database anda dengan di bawah ini
+    url: jdbc:mysql://35.188.153.98:3306/medis?useSSL=true&serverTimezone=Asia/Jakarta&allowPublicKeyRetrieval=true
+
+    # sesuaikan dengan NAMA dan PASSWORD anda dengan username password di bawah ini
+    username: springuser
+    password: password
+
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        dialect.storage_engine: innodb
+        format_sql: true
+
+    # pembuatan database (create || create-drop || validate || update)
+    hibernate.ddl-auto: update
+
+    show-sql: false
+
+
+  # Templates reloading during development
+  thymeleaf:
+    prefix: file:src/main/resources/templates/
+    cache: false
+
+  # Static resources reloading during development
+  web:
+    resources:
+      static-locations: file:src/main/resources/static/
+
+  security:
+    user:
+      name: medis
+      password: medis
+
+  # Mengatur limitasi ukuran upload file
+  servlet:
+    multipart:
+      max-file-size: 500000MB
+      max-request-size: 500000MB
+
+midtrans:
+  sandbox:
+    client:
+      key: SB-Mid-client-lnN8ObCRkKt2kySb
+    server:
+      key: SB-Mid-server-zfu0fjTKc8Y2idaW9X-y9SmW
+  prod:
+    client:
+      key: Mid-client-VHTCIqvrda0j2NMe
+    server:
+      key: Mid-server-Zu-SxUT2mq9_e1OiDfiHnAP1
