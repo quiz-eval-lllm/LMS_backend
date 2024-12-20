@@ -41,12 +41,12 @@ public class CourseModel {
     @Column(name = "description", nullable = false, columnDefinition = "TEXT")
     private String description;
 
-    @NotNull
-    @Column(name="image_url", nullable = false)
+
+    @Column(name="image_url", nullable = true)
     private String image_url;
 
-    @NotNull
-    @Column(name="image_token", nullable = false)
+
+    @Column(name="image_token", nullable = true)
     private String image_token;
 
     @NotNull
@@ -63,8 +63,8 @@ public class CourseModel {
     @Column(name = "rating", nullable = false)
     private float rating;
 
-    @NotNull
-    @Column(name = "total_material", nullable = false)
+
+    @Column(name = "total_material", nullable = true)
     private int totalMaterial;
 
     @NotNull
