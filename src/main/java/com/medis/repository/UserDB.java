@@ -9,16 +9,21 @@ import java.util.Set;
 
 public interface UserDB extends JpaRepository<UserModel, String> {
     Optional<UserModel> findByUuid(String uuid);
+
     Optional<UserModel> findByEmail(String email);
 
-//    Optional<UserModel> findByForgotUrl(String forgotUrl);
-//    List<UserModel> findByBannedStatusAndRoleAndEmailContainingIgnoreCase(String status, String role, String search);
-//
-//    List<UserModel> findByRoleAndEmailContainingIgnoreCase(String role, String search);
-//
-//    List<UserModel> findByEmailContainingIgnoreCase(String search);
-//
-//    List<UserModel> findByBannedStatusAndEmailContainingIgnoreCase(String status, String search);
+    Optional<UserModel> findByNama(String nama);
 
+    // Optional<UserModel> findByForgotUrl(String forgotUrl);
+    // List<UserModel> findByBannedStatusAndRoleAndEmailContainingIgnoreCase(String
+    // status, String role, String search);
+    //
+    // List<UserModel> findByRoleAndEmailContainingIgnoreCase(String role, String
+    // search);
+    //
+    // List<UserModel> findByEmailContainingIgnoreCase(String search);
+    //
+    // List<UserModel> findByBannedStatusAndEmailContainingIgnoreCase(String status,
+    // String search);
 
 }

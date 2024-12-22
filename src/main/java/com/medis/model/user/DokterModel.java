@@ -21,15 +21,12 @@ import java.util.List;
 @Table(name = "dokter")
 public class DokterModel extends UserModel {
 
-    @NotNull
     @Column
     private String nomorTelefon;
 
-    @NotNull
     @Column
     private String institusi;
 
-    @NotNull
     @Column
     private String pekerjaan;
 
@@ -42,8 +39,6 @@ public class DokterModel extends UserModel {
     @Column
     private String jenisKelamin;
 
-    @NotNull
-    @Column(nullable = false)
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     private LocalDate tanggalLahir;
 

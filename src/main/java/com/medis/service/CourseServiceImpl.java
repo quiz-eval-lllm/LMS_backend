@@ -10,65 +10,70 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
-public class CourseServiceImpl implements CourseService{
+public class CourseServiceImpl implements CourseService {
 
     @Autowired
     CourseDB courseDB;
 
-
     @Override
     public CourseModel addCourse(CourseModel course) {
-        return  courseDB.save(course);
+        return courseDB.save(course);
     }
+
     @Override
     public CourseModel updateCourse(CourseModel course) {
-        return  courseDB.save(course);
+        return courseDB.save(course);
     }
+
     @Override
     public List<CourseModel> getAllCourse(int page) {
-        Pageable pageable = PageRequest.of(page-1, 8);
+        Pageable pageable = PageRequest.of(page - 1, 8);
         return courseDB.findAll(pageable).getContent();
     }
 
     @Override
-    public CourseModel getCourseBySlugName(String slugName){
+    public CourseModel getCourseBySlugName(String slugName) {
         return courseDB.findBySlugName(slugName);
     }
 
     @Override
-    public CourseModel getCourseByUuid(String uuid){
+    public CourseModel getCourseByUuid(String uuid) {
         return courseDB.findById(uuid).orElse(null);
     }
 
     @Override
-    public void deleteCourse(CourseModel course){
+    public void deleteCourse(CourseModel course) {
         courseDB.delete(course);
     }
 
     @Override
     public List<CourseModel> searchCourse(String keyword, int page) {
-        Pageable pageable = PageRequest.of(page-1, 8);
+        Pageable pageable = PageRequest.of(page - 1, 8);
         return courseDB.findByNameLike(keyword, pageable);
     }
 
     @Override
     public List<CourseModel> searchReleasedCourse(String keyword, int page) {
-        if(page == 0) {
+        if (page == 0) {
             return courseDB.findByIsReleasedTrue();
         }
-        Pageable pageable = PageRequest.of(page-1, 8);
+        Pageable pageable = PageRequest.of(page - 1, 8);
         return courseDB.findByReleasedTrue(keyword, pageable);
     }
 
     @Override
     public int getTotalCourse(String keyword) {
-        int total = courseDB.findByNameLike(keyword, null).size();
-        return total;
+        if (keyword == null || keyword.isEmpty()) {
+            return (int) courseDB.count();
+        }
+        return courseDB.findByNameLike(keyword, Pageable.unpaged()).size();
     }
 
     @Override
     public int getTotalReleasedCourse(String keyword) {
-        int total = courseDB.findByReleasedTrue(keyword, null).size();
-        return total;
+        if (keyword == null || keyword.isEmpty()) {
+            return courseDB.findByIsReleasedTrue().size();
+        }
+        return courseDB.findByReleasedTrue(keyword, Pageable.unpaged()).size();
     }
 }

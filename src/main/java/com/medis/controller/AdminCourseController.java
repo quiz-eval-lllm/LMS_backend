@@ -50,20 +50,21 @@ public class AdminCourseController {
     CourseEnrollmentService courseEnrollmentService;
 
     @GetMapping("/course")
-    public ResponseEntity<?> getAllCourses(@RequestParam(required = false) String keyword, @RequestParam int page) {
+    public ResponseEntity<?> getAllCourses(@RequestParam(name = "keyword", required = false) String searchkeyword,
+            @RequestParam(name = "page", defaultValue = "0") int searchpage) {
         CustomResponse response;
         List<CourseModel> listCourse;
-        if(keyword!=null) {
-            listCourse = courseService.searchCourse(keyword, page);
+        if (searchkeyword != null) {
+            listCourse = courseService.searchCourse(searchkeyword, searchpage);
         } else {
-            listCourse = courseService.getAllCourse(page);
+            listCourse = courseService.getAllCourse(searchpage);
         }
         List<CourseResponse> data = new ArrayList<>();
-        int total = courseService.getTotalCourse(keyword);
+        int total = courseService.getTotalCourse(searchkeyword);
         Map<String, Object> responseData = new HashMap<>();
         ModelMapper modelMapper = new ModelMapper();
         CourseResponse courseResponse;
-        for(CourseModel course:listCourse) {
+        for (CourseModel course : listCourse) {
             courseResponse = modelMapper.map(course, CourseResponse.class);
             data.add(courseResponse);
         }
@@ -78,7 +79,7 @@ public class AdminCourseController {
         CustomResponse response;
         String slugName = name.toLowerCase().replace(" ", "-");
         CourseModel existingCourse = courseService.getCourseBySlugName(slugName);
-        if(existingCourse != null) {
+        if (existingCourse != null) {
             response = new CustomResponse(400, "Course name must be unique", false);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
@@ -89,13 +90,13 @@ public class AdminCourseController {
     @PostMapping("/course/create")
     public ResponseEntity<?> createCourse(@Valid @RequestBody CourseRequest course, BindingResult bindingResult) {
         CustomResponse response;
-        if(bindingResult.hasErrors()) {
+        if (bindingResult.hasErrors()) {
             response = new CustomResponse(400, "Please fill the required data properly", null);
             return ResponseEntity.badRequest().body(response);
         }
         String slugName = course.getName().toLowerCase().replace(" ", "-");
         CourseModel existingCourse = courseService.getCourseBySlugName(slugName);
-        if(existingCourse != null) {
+        if (existingCourse != null) {
             response = new CustomResponse(400, "Course name must be unique", null);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
@@ -108,17 +109,19 @@ public class AdminCourseController {
         newCourse.setUpdatedAt(LocalDateTime.now());
         int totalMaterial = 0;
         for (SubCourseRequest subcourse : course.getSubcourses()) {
-            totalMaterial+=subcourse.getMaterials().size();
+            totalMaterial += subcourse.getMaterials().size();
         }
         newCourse.setTotalMaterial(totalMaterial);
         newCourse.setRating(0);
-        Map<Integer, Integer> ratingDistribution = new HashMap<>() {{
-            put(1, 0);
-            put(2, 0);
-            put(3, 0);
-            put(4, 0);
-            put(5, 0);
-        }};
+        Map<Integer, Integer> ratingDistribution = new HashMap<>() {
+            {
+                put(1, 0);
+                put(2, 0);
+                put(3, 0);
+                put(4, 0);
+                put(5, 0);
+            }
+        };
         newCourse.setRatingDistribution(ratingDistribution);
         courseService.addCourse(newCourse);
         for (SubCourseRequest subcourse : course.getSubcourses()) {
@@ -140,16 +143,17 @@ public class AdminCourseController {
     }
 
     @PutMapping("/course/update/{uuid}")
-    public ResponseEntity<?> updateCourse(@PathVariable("uuid") String uuid, @Valid @RequestBody CourseRequest course, BindingResult bindingResult) {
+    public ResponseEntity<?> updateCourse(@PathVariable("uuid") String uuid, @Valid @RequestBody CourseRequest course,
+            BindingResult bindingResult) {
         CustomResponse response;
-        if(bindingResult.hasErrors()) {
+        if (bindingResult.hasErrors()) {
             response = new CustomResponse(400, "Please fill the required data properly", null);
             return ResponseEntity.badRequest().body(response);
         }
         String slugName = course.getName().toLowerCase().replace(" ", "-");
         CourseModel existingCourse = courseService.getCourseByUuid(uuid);
         CourseModel anotherExistingCourse = courseService.getCourseBySlugName(slugName);
-        if(anotherExistingCourse != null && anotherExistingCourse.getUuid() != uuid) {
+        if (anotherExistingCourse != null && anotherExistingCourse.getUuid() != uuid) {
             response = new CustomResponse(400, "Course name must be unique", null);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
@@ -166,22 +170,24 @@ public class AdminCourseController {
         existingCourse.setUpdatedAt(LocalDateTime.now());
         int totalMaterial = 0;
         for (SubCourseRequest subcourse : course.getSubcourses()) {
-            totalMaterial+=subcourse.getMaterials().size();
+            totalMaterial += subcourse.getMaterials().size();
         }
         existingCourse.setTotalMaterial(totalMaterial);
         existingCourse.setRating(0);
-        Map<Integer, Integer> ratingDistribution = new HashMap<>() {{
-            put(1, 0);
-            put(2, 0);
-            put(3, 0);
-            put(4, 0);
-            put(5, 0);
-        }};
+        Map<Integer, Integer> ratingDistribution = new HashMap<>() {
+            {
+                put(1, 0);
+                put(2, 0);
+                put(3, 0);
+                put(4, 0);
+                put(5, 0);
+            }
+        };
         existingCourse.setRatingDistribution(ratingDistribution);
         courseService.updateCourse(existingCourse);
         for (SubCourseRequest subcourse : course.getSubcourses()) {
             SubCourseModel existingSubCourse;
-            if(subcourse.getUuid() == null) {
+            if (subcourse.getUuid() == null) {
                 existingSubCourse = modelMapper.map(subcourse, SubCourseModel.class);
                 existingSubCourse.setCreatedAt(LocalDateTime.now());
             } else {
@@ -194,7 +200,7 @@ public class AdminCourseController {
             subCourseService.updateSubCourse(existingSubCourse);
             for (MaterialRequest material : subcourse.getMaterials()) {
                 MaterialModel existingMaterial;
-                if(material.getUuid() == null) {
+                if (material.getUuid() == null) {
                     existingMaterial = modelMapper.map(material, MaterialModel.class);
                     existingMaterial.setCreatedAt(LocalDateTime.now());
                 } else {
@@ -219,7 +225,7 @@ public class AdminCourseController {
     public ResponseEntity<?> releaseCourse(@PathVariable("slugName") String slugName) {
         CustomResponse response;
         CourseModel course = courseService.getCourseBySlugName(slugName);
-        if(course == null) {
+        if (course == null) {
             response = new CustomResponse(404, "Course not found", null);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
@@ -230,7 +236,9 @@ public class AdminCourseController {
     }
 
     @GetMapping("/course/participant/{slugName}")
-    public ResponseEntity<?> getCourseParticipant(@PathVariable("slugName") String slugName, @RequestParam(name = "name", required = false) String searchName, @RequestParam(defaultValue = "1") int page) {
+    public ResponseEntity<?> getCourseParticipant(@PathVariable("slugName") String slugName,
+            @RequestParam(name = "name", required = false) String searchName,
+            @RequestParam(defaultValue = "1") int page) {
         CustomResponse response;
         CourseModel course = courseService.getCourseBySlugName(slugName);
         List<CourseEnrollmentModel> listEnrollment = courseEnrollmentService.getCourseParticipant(course);
@@ -241,22 +249,23 @@ public class AdminCourseController {
 
         if (searchName != null && !searchName.isEmpty()) {
             listEnrollment = listEnrollment.stream()
-                    .filter(enrollment -> enrollment.getUser().getNama().toLowerCase().contains(searchName.toLowerCase()))
+                    .filter(enrollment -> enrollment.getUser().getNama().toLowerCase()
+                            .contains(searchName.toLowerCase()))
                     .collect(Collectors.toList());
 
         }
 
-        for(CourseEnrollmentModel enrollment:listEnrollment) {
+        for (CourseEnrollmentModel enrollment : listEnrollment) {
             participant = modelMapper.map(enrollment, CourseParticipantResponse.class);
             data.add(participant);
         }
 
-        int start = (page-1) * 10;
+        int start = (page - 1) * 10;
         int end = Math.min(start + 10, listEnrollment.size());
 
         int total = listEnrollment.size();
         List<CourseParticipantResponse> responseData;
-        if(start<listEnrollment.size()) {
+        if (start < listEnrollment.size()) {
             responseData = data.subList(start, end);
         } else {
             responseData = null;
@@ -271,14 +280,14 @@ public class AdminCourseController {
     }
 
     @DeleteMapping("/course/delete/{slugName}")
-    public ResponseEntity<?> deleteCourse(@PathVariable("slugName") String slugName ) {
+    public ResponseEntity<?> deleteCourse(@PathVariable("slugName") String slugName) {
         CustomResponse response;
         CourseModel course = courseService.getCourseBySlugName(slugName);
-        if(course == null) {
+        if (course == null) {
             response = new CustomResponse(404, "Course not found", null);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
-        if(course.getTotalParticipant() > 0) {
+        if (course.getTotalParticipant() > 0) {
             response = new CustomResponse(500, "Course with participant can't be deleted", null);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
@@ -299,10 +308,10 @@ public class AdminCourseController {
     }
 
     @DeleteMapping("/subcourse/delete/{uuid}")
-    public ResponseEntity<?> deleteSubCourse(@PathVariable("uuid") String uuid ) {
+    public ResponseEntity<?> deleteSubCourse(@PathVariable("uuid") String uuid) {
         CustomResponse response;
         SubCourseModel subcourse = subCourseService.getSubCourseByUuid(uuid);
-        if(subcourse == null) {
+        if (subcourse == null) {
             response = new CustomResponse(404, "Subcourse not found", null);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
@@ -317,10 +326,10 @@ public class AdminCourseController {
     }
 
     @DeleteMapping("/material/delete/{uuid}")
-    public ResponseEntity<?> deleteMaterial(@PathVariable("uuid") String uuid ) {
+    public ResponseEntity<?> deleteMaterial(@PathVariable("uuid") String uuid) {
         CustomResponse response;
         MaterialModel material = materialService.getMaterialByID(uuid);
-        if(material == null) {
+        if (material == null) {
             response = new CustomResponse(404, "Material not found", null);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
@@ -336,7 +345,7 @@ public class AdminCourseController {
     public ResponseEntity<?> deleteDiscussion(@PathVariable("discussionID") String discussionID) {
         CustomResponse response;
         DiscussionModel discussion = discussionService.getDiscussionByID(discussionID);
-        if(discussion == null) {
+        if (discussion == null) {
             response = new CustomResponse(404, "Discussion not found", null);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
@@ -349,7 +358,7 @@ public class AdminCourseController {
     public ResponseEntity<?> deleteReply(@PathVariable("replyID") String replyID) {
         CustomResponse response;
         ReplyModel reply = replyService.getReplyByID(replyID);
-        if(reply == null) {
+        if (reply == null) {
             response = new CustomResponse(404, "Reply not found", null);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
@@ -359,8 +368,9 @@ public class AdminCourseController {
     }
 
     @GetMapping("/activity")
-    public ResponseEntity<?> getActivity(@RequestParam(defaultValue = "1") int page, @RequestParam(name = "user") String searchUser,
-                                         @RequestParam(name = "course") String searchCourse) {
+    public ResponseEntity<?> getActivity(@RequestParam(defaultValue = "1") int page,
+            @RequestParam(name = "user") String searchUser,
+            @RequestParam(name = "course") String searchCourse) {
         CustomResponse response;
 
         List<CourseActivityModel> filteredActivities = new ArrayList<>(courseActivityService.getAllActivity());
@@ -372,14 +382,12 @@ public class AdminCourseController {
                 .filter(activity -> activity.getCourse().equalsIgnoreCase(searchCourse.toLowerCase()))
                 .collect(Collectors.toList());
 
-
-
-        int start = (page-1) * 10;
+        int start = (page - 1) * 10;
         int end = Math.min(start + 10, filteredActivities.size());
 
         int total = filteredActivities.size();
         List<CourseActivityModel> data;
-        if(start<total) {
+        if (start < total) {
             data = filteredActivities.subList(start, end);
         } else {
             data = null;
@@ -397,15 +405,14 @@ public class AdminCourseController {
     private final String AUTH_TOKEN_2 = "Token d1716bdc2f214d240f4750df95e663d809258ad3";
     private final Map<String, String> TOKEN_MAP = Map.ofEntries(
             Map.entry("http://192.168.1.11", AUTH_TOKEN),
-            Map.entry("http://192.168.1.12", AUTH_TOKEN_2)
-    );
-    @PostMapping(value="/upload-media", consumes= MediaType.MULTIPART_FORM_DATA_VALUE, produces=MediaType.APPLICATION_JSON_VALUE)
+            Map.entry("http://192.168.1.12", AUTH_TOKEN_2));
+
+    @PostMapping(value = "/upload-media", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> uploadMedia(
             @RequestParam("media_file") MultipartFile mediaFile,
-            @RequestParam(value="title", required=false) String title,
-            @RequestParam(value="delete_token", required=false) String deleteToken,
-            @RequestParam(value="material_url", required=false) String materialUrl
-    ) throws IOException {
+            @RequestParam(value = "title", required = false) String title,
+            @RequestParam(value = "delete_token", required = false) String deleteToken,
+            @RequestParam(value = "material_url", required = false) String materialUrl) throws IOException {
         // Validate if the file is not empty
         if (mediaFile.isEmpty()) {
             return ResponseEntity.badRequest().body("Please select a file to upload");
@@ -447,15 +454,15 @@ public class AdminCourseController {
                             entry.getKey() + "/api/v1/media/",
                             HttpMethod.POST,
                             postEntity,
-                            String.class
-                    );
+                            String.class);
                     responseBody = mediaPostResponse.getBody();
                     int urlIndex = responseBody.indexOf("\"url\":");
                     int startIndex = responseBody.indexOf("\"", urlIndex + 6); // +6 to skip past "\"url\":"
                     int endIndex = responseBody.indexOf("\"", startIndex + 1);
                     url += responseBody.substring(startIndex + 1, endIndex).replace("/view?", "/embed?") + ";";
                 }
-                return ResponseEntity.ok(responseBody.replaceAll("\"url\":\\s*\"[^\"]*\"", "\"url\": \"" + url.substring(0, url.length()-1) + "\""));
+                return ResponseEntity.ok(responseBody.replaceAll("\"url\":\\s*\"[^\"]*\"",
+                        "\"url\": \"" + url.substring(0, url.length() - 1) + "\""));
             }
 
             else {
@@ -463,8 +470,7 @@ public class AdminCourseController {
                         "http://192.168.1.13:8000",
                         HttpMethod.POST,
                         authorizationEntity,
-                        String.class
-                );
+                        String.class);
                 String url = response.getHeaders().getLocation().toString();
                 url = url.substring(0, url.length() - 1);
 
@@ -478,28 +484,30 @@ public class AdminCourseController {
                         url + "/api/v1/media/",
                         HttpMethod.POST,
                         postEntity,
-                        String.class
-                );
+                        String.class);
 
                 // Extract friendly_token from the response
                 String friendlyToken = mediaPostResponse.getBody().substring(19, 28);
 
-                // Construct URL for fetching additional information about the media using the friendly_token
+                // Construct URL for fetching additional information about the media using the
+                // friendly_token
                 String mediaInfoUrl = url + "/api/v1/media/" + friendlyToken;
 
-                // Call another API to get additional information about the media using the friendly_token
+                // Call another API to get additional information about the media using the
+                // friendly_token
                 ResponseEntity<String> mediaInfoResponse = restTemplate.exchange(
                         mediaInfoUrl,
                         HttpMethod.GET,
                         authorizationEntity,
-                        String.class
-                );
+                        String.class);
 
-                String combinedResponse = combineResponseBodies(mediaPostResponse.getBody(), mediaInfoResponse.getBody(), url);
+                String combinedResponse = combineResponseBodies(mediaPostResponse.getBody(),
+                        mediaInfoResponse.getBody(), url);
                 return ResponseEntity.ok(combinedResponse);
             }
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to upload the video: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to upload the video: " + e.getMessage());
         }
     }
 
@@ -515,8 +523,8 @@ public class AdminCourseController {
 
     // Method to extract the original_media_url from the JSON string
     private String extractOriginalMediaUrl(String mediaInfoResponse) {
-        int urlStartIndex = mediaInfoResponse.indexOf("\"original_media_url\"")+22;
-        int closingQuoteIndex = mediaInfoResponse.indexOf("\"size\"")-1;
+        int urlStartIndex = mediaInfoResponse.indexOf("\"original_media_url\"") + 22;
+        int closingQuoteIndex = mediaInfoResponse.indexOf("\"size\"") - 1;
 
         if (urlStartIndex < closingQuoteIndex) {
             // Extract the substring between the original_media_url and size fields
@@ -526,9 +534,10 @@ public class AdminCourseController {
         return null;
     }
 
-    // Method to combines the media post response body with the original_media_url extracted from media info response body
+    // Method to combines the media post response body with the original_media_url
+    // extracted from media info response body
     private String combineResponseBodies(String mediaPostResponse, String mediaInfoResponse, String url) {
-        String combinedResponse = mediaPostResponse.substring(0,mediaPostResponse.length()-1);
+        String combinedResponse = mediaPostResponse.substring(0, mediaPostResponse.length() - 1);
 
         // Append the original_media_url to the combined response body
         String originalMediaUrl = extractOriginalMediaUrl(mediaInfoResponse);

@@ -41,12 +41,10 @@ public class CourseModel {
     @Column(name = "description", nullable = false, columnDefinition = "TEXT")
     private String description;
 
-    @NotNull
-    @Column(name="image_url", nullable = false)
+    @Column(name = "image_url", nullable = true)
     private String image_url;
 
-    @NotNull
-    @Column(name="image_token", nullable = false)
+    @Column(name = "image_token", nullable = true)
     private String image_token;
 
     @NotNull
@@ -68,7 +66,7 @@ public class CourseModel {
     private int totalMaterial;
 
     @NotNull
-    @Column(name="exam_link", nullable = true)
+    @Column(name = "exam_link", nullable = true)
     private String examLink;
 
     @ElementCollection

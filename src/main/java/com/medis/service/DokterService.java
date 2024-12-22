@@ -8,4 +8,6 @@ public interface DokterService {
     boolean isEmailExist(String email);
 
     DokterModel findByEmail(String email);
+
+    DokterModel findByNama(String nama);
 }

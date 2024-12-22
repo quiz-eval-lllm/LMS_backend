@@ -1,18 +1,14 @@
-server:
-  port: 80
-
 spring:
-
   # konfigurasi untuk koneksi db
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
 
     # sesuaikan nama database anda dengan di bawah ini
-    url: jdbc:mysql://35.188.153.98:3306/medis?useSSL=true&serverTimezone=Asia/Jakarta&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://35.238.65.121:3306/medis?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Jakarta
 
     # sesuaikan dengan NAMA dan PASSWORD anda dengan username password di bawah ini
-    username: springuser
-    password: password
+    username: medislms
+    password: lms12345
 
   jpa:
     properties:
@@ -25,7 +21,6 @@ spring:
     hibernate.ddl-auto: update
 
     show-sql: false
-
 
   # Templates reloading during development
   thymeleaf:
@@ -59,3 +54,6 @@ midtrans:
       key: Mid-client-VHTCIqvrda0j2NMe
     server:
       key: Mid-server-Zu-SxUT2mq9_e1OiDfiHnAP1
+
+server:
+  port: 8084

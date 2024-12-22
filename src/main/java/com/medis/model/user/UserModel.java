@@ -22,8 +22,8 @@ import java.util.UUID;
 @NoArgsConstructor
 @Entity
 @SuperBuilder
-@Inheritance(strategy=InheritanceType.JOINED)
-@Table(name = "user")
+@Inheritance(strategy = InheritanceType.JOINED)
+@Table(name = "\"user\"")
 public class UserModel implements Serializable {
 
     @Id
@@ -33,22 +33,22 @@ public class UserModel implements Serializable {
     private String uuid;
 
     @NotNull
-    @Column(name="nama", nullable = false)
+    @Column(name = "nama", nullable = false, unique = true)
     private String nama;
 
     @NotNull
-    @Column(name="email", nullable = false, unique = true)
+    @Column(name = "email", nullable = false, unique = true)
     private String email;
 
     @NotNull
-    @Column(name="role", nullable = false)
+    @Column(name = "role", nullable = false)
     private String role;
 
     @NotNull
-    @Column(name="password", nullable = false)
+    @Column(name = "password", nullable = false)
     private String password;
 
-    @Column(name="photo_url")
+    @Column(name = "photo_url")
     private String photoUrl = "/img/profile-picture2.jpg";
 
     @OneToMany(mappedBy = "user")
@@ -64,11 +64,10 @@ public class UserModel implements Serializable {
     public void setForgotUrl(String forgotUrl) {
         if (forgotUrl.equals("generate")) {
             this.forgotUrl = UUID.randomUUID().toString();
-        }else{
+        } else {
             this.forgotUrl = null;
         }
     }
-
 
     @NotNull
     @Column(nullable = false)
@@ -77,12 +76,11 @@ public class UserModel implements Serializable {
     @OneToOne(mappedBy = "user")
     private BannedStatusModel bannedStatusModel;
 
-
     public void setBannedStatusModel(BannedStatusModel bannedStatusModel) {
-        if(bannedStatusModel != null){
+        if (bannedStatusModel != null) {
             this.bannedStatusModel = bannedStatusModel;
             this.bannedStatus = "Banned";
-        }else{
+        } else {
             this.bannedStatusModel = null;
             this.bannedStatus = "Clear";
         }

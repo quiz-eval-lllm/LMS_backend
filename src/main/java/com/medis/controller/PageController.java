@@ -2,9 +2,16 @@ package com.medis.controller;
 
 import com.medis.dto.*;
 import com.medis.model.course.CourseEnrollmentModel;
+import com.medis.model.user.AdminModel;
 import com.medis.model.user.DokterModel;
+import com.medis.model.user.UserModel;
 import com.medis.security.JwtService;
+import com.medis.service.AdminService;
+import com.medis.service.AuthService;
 import com.medis.service.DokterService;
+import com.medis.service.UserService;
+import com.medis.util.RoleExtractor;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
@@ -31,6 +38,7 @@ import java.security.DigestException;
 import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/api/v1")
@@ -40,19 +48,29 @@ public class PageController {
     DokterService dokterService;
 
     @Autowired
+    UserService userService;
+
+    @Autowired
+    AdminService adminService;
+
+    @Autowired
+    AuthService authService;
+
+    @Autowired
     JwtService jwtService;
 
     @Autowired
     AuthenticationManager authenticationManager;
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@Valid @RequestBody DokterModel dokter, BindingResult bindingResult) throws Exception {
+    public ResponseEntity<?> register(@Valid @RequestBody DokterModel dokter, BindingResult bindingResult)
+            throws Exception {
         CustomResponse response;
-        if(bindingResult.hasErrors()) {
+        if (bindingResult.hasErrors()) {
             response = new CustomResponse(400, "Please fill the required data properly", null);
             return ResponseEntity.badRequest().body(response);
         }
-        if(dokterService.isEmailExist(dokter.getEmail())) {
+        if (dokterService.isEmailExist(dokter.getEmail())) {
             response = new CustomResponse(400, "Email already registered", null);
             return ResponseEntity.badRequest().body(response);
         }
@@ -79,21 +97,23 @@ public class PageController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody AuthRequest authRequest, BindingResult bindingResult) throws Exception {
+    public ResponseEntity<?> login(@Valid @RequestBody AuthRequest authRequest, BindingResult bindingResult)
+            throws Exception {
         CustomResponse response;
-        if(bindingResult.hasErrors()) {
+        if (bindingResult.hasErrors()) {
             response = new CustomResponse(400, "Please fill the required data properly", null);
             return ResponseEntity.badRequest().body(response);
         }
 
-        Authentication authentication;
         try {
+            String nama = authRequest.getEmail();
             final String secret = "9d12b871f4a8533e5d3a6d9e95d71b20";
             byte[] cipherData = Base64.getDecoder().decode(authRequest.getPassword());
             byte[] saltData = Arrays.copyOfRange(cipherData, 8, 16);
 
             MessageDigest md5 = MessageDigest.getInstance("MD5");
-            final byte[][] keyAndIV = GenerateKeyAndIV(32, 16, 1, saltData, secret.getBytes(StandardCharsets.UTF_8), md5);
+            final byte[][] keyAndIV = GenerateKeyAndIV(32, 16, 1, saltData, secret.getBytes(StandardCharsets.UTF_8),
+                    md5);
             SecretKeySpec key = new SecretKeySpec(keyAndIV[0], "AES");
             IvParameterSpec iv = new IvParameterSpec(keyAndIV[1]);
 
@@ -103,28 +123,83 @@ public class PageController {
             byte[] decryptedData = aesCBC.doFinal(encrypted);
             String decryptedText = new String(decryptedData, StandardCharsets.UTF_8);
 
-            authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(authRequest.getEmail(), decryptedText));
+            // authentication = authenticationManager.authenticate(new
+            // UsernamePasswordAuthenticationToken(authRequest.getEmail(), decryptedText));\
+
+            Map<String, Object> externalAuthResponse = authService.authenticate(
+                    nama,
+                    decryptedText);
+
+            String accessToken = (String) externalAuthResponse.get("access_token");
+
+            String role = RoleExtractor.extractClientDokterRole(accessToken);
+            String email = RoleExtractor.extractEmail(accessToken);
+
+            UserModel user = userService.findByNama(nama);
+
+            String token = "";
+
+            if (user == null) {
+                if (role.equals("DOKTER")) {
+                    DokterModel newDokter = new DokterModel();
+                    newDokter.setNama(nama);
+                    newDokter.setPassword(decryptedText);
+                    newDokter.setRole(role);
+                    String tempEmail = "";
+                    if (email == null) {
+                        tempEmail = "new.dokter@lms.com";
+                    } else {
+                        tempEmail = email;
+                    }
+                    newDokter.setEmail(tempEmail);
+                    dokterService.addDokter(newDokter);
+
+                    // Generate token
+                    token = jwtService.generateToken(tempEmail, role);
+                } else {
+                    AdminModel newAdmin = new AdminModel();
+                    newAdmin.setNama(nama);
+                    newAdmin.setPassword(decryptedText);
+                    newAdmin.setRole(role);
+                    String tempEmail = "";
+                    if (email == null) {
+                        tempEmail = "new.admin@lms.com";
+                    } else {
+                        tempEmail = email;
+                    }
+                    newAdmin.setEmail(tempEmail);
+                    adminService.addAdmin(newAdmin);
+
+                    // Generate token
+                    token = jwtService.generateToken(tempEmail, role);
+                }
+
+            } else {
+                token = jwtService.generateToken(user.getEmail(), user.getRole());
+            }
+
+            return ResponseEntity.ok(new CustomResponse(200, "Success", token));
         } catch (AuthenticationException e) {
             response = new CustomResponse(400, "Incorrect email or password", null);
             return ResponseEntity.badRequest().body(response);
         }
 
-        if(authentication.isAuthenticated()) {
-            DokterModel dokter = dokterService.findByEmail(authRequest.getEmail());
-            boolean isAdmin = true;
-            String role = "ADMIN";
-            if(dokter != null) {
-                isAdmin = false;
-                role = "DOKTER";
-            }
-            String token = jwtService.generateToken(authRequest.getEmail(), role);
-            String email = jwtService.extractEmail(token);
-            response = new CustomResponse(200, "Success", new TokenResponse(token));
-            return ResponseEntity.ok(response);
-        } else {
-            response = new CustomResponse(500, "Something went wrong", null);
-            return ResponseEntity.internalServerError().body(response);
-        }
+        // if(authentication.isAuthenticated()) {
+        // DokterModel dokter = dokterService.findByEmail(authRequest.getEmail());
+        // boolean isAdmin = true;
+        // String role = "ADMIN";
+        // if(dokter != null) {
+        // isAdmin = false;
+        // role = "DOKTER";
+        // }
+        // String token = jwtService.generateToken(authRequest.getEmail(), role);
+        // String email = jwtService.extractEmail(token);
+        // response = new CustomResponse(200, "Success", new TokenResponse(token));
+        // return ResponseEntity.ok(response);
+        // } else {
+        // response = new CustomResponse(500, "Something went wrong", null);
+        // return ResponseEntity.internalServerError().body(response);
+        // }
 
     }
 
@@ -149,7 +224,8 @@ public class PageController {
         return ResponseEntity.ok(response);
     }
 
-    public static byte[][] GenerateKeyAndIV(int keyLength, int ivLength, int iterations, byte[] salt, byte[] password, MessageDigest md) {
+    public static byte[][] GenerateKeyAndIV(int keyLength, int ivLength, int iterations, byte[] salt, byte[] password,
+            MessageDigest md) {
 
         int digestLength = md.getDigestLength();
         int requiredLength = (keyLength + ivLength + digestLength - 1) / digestLength * digestLength;
@@ -192,7 +268,7 @@ public class PageController {
 
         } finally {
             // Clean out temporary data
-            Arrays.fill(generatedData, (byte)0);
+            Arrays.fill(generatedData, (byte) 0);
         }
     }
 }

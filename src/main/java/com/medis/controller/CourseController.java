@@ -56,15 +56,16 @@ public class CourseController {
     CourseActivityService courseActivityService;
 
     @GetMapping("")
-    public ResponseEntity<?> getAllCourses(@RequestParam(required = false) String keyword, @RequestParam(defaultValue = "0") int page) {
+    public ResponseEntity<?> getAllCourses(@RequestParam(name = "keyword", required = false) String searchkeyword,
+            @RequestParam(name = "page", defaultValue = "0") int searchpage) {
         CustomResponse response;
-        List<CourseModel> listCourse = courseService.searchReleasedCourse(keyword, page);
+        List<CourseModel> listCourse = courseService.searchReleasedCourse(searchkeyword, searchpage);
         List<CourseResponse> data = new ArrayList<>();
-        int total = courseService.getTotalReleasedCourse(keyword);
+        int total = courseService.getTotalReleasedCourse(searchkeyword);
         Map<String, Object> responseData = new HashMap<>();
         ModelMapper modelMapper = new ModelMapper();
         CourseResponse courseResponse;
-        for(CourseModel course:listCourse) {
+        for (CourseModel course : listCourse) {
             courseResponse = modelMapper.map(course, CourseResponse.class);
             data.add(courseResponse);
         }
@@ -78,7 +79,7 @@ public class CourseController {
     public ResponseEntity<?> getCourse(@PathVariable("slugName") String slugName) {
         CustomResponse response;
         CourseModel course = courseService.getCourseBySlugName(slugName);
-        if(course == null) {
+        if (course == null) {
             response = new CustomResponse(404, "Course not found", course);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
@@ -92,7 +93,7 @@ public class CourseController {
     public ResponseEntity<?> getDetailCourse(@PathVariable("slugName") String slugName) {
         CustomResponse response;
         CourseModel course = courseService.getCourseBySlugName(slugName);
-        if(course == null) {
+        if (course == null) {
             response = new CustomResponse(404, "Course not found", course);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
@@ -102,10 +103,11 @@ public class CourseController {
     }
 
     @GetMapping("/{slugName}/{materialID}")
-    public ResponseEntity<?> getMaterialID(@PathVariable("slugName") String slugName, @PathVariable("materialID") String materialID) {
+    public ResponseEntity<?> getMaterialID(@PathVariable("slugName") String slugName,
+            @PathVariable("materialID") String materialID) {
         CustomResponse response;
         MaterialModel material = materialService.getMaterialByID(materialID);
-        if(material == null) {
+        if (material == null) {
             response = new CustomResponse(404, "Material not found", material);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
@@ -115,9 +117,10 @@ public class CourseController {
     }
 
     @PostMapping("/review/{slugName}")
-    public ResponseEntity<?> reviewCourse(HttpServletRequest request, @PathVariable("slugName") String slugName, @Valid @RequestBody ReviewModel review, BindingResult bindingResult) throws Exception {
+    public ResponseEntity<?> reviewCourse(HttpServletRequest request, @PathVariable("slugName") String slugName,
+            @Valid @RequestBody ReviewModel review, BindingResult bindingResult) throws Exception {
         CustomResponse response;
-        if(bindingResult.hasErrors()) {
+        if (bindingResult.hasErrors()) {
             response = new CustomResponse(400, "Please fill the required data properly", null);
             return ResponseEntity.badRequest().body(response);
         }
@@ -152,8 +155,8 @@ public class CourseController {
         review.setCreatedAt(LocalDateTime.now());
         review.setUpdatedAt(LocalDateTime.now());
 
-        float totalRating = course.getRating()*course.getListReview().size();
-        course.setRating((totalRating + review.getRating())/(course.getListReview().size()+1));
+        float totalRating = course.getRating() * course.getListReview().size();
+        course.setRating((totalRating + review.getRating()) / (course.getListReview().size() + 1));
         Map<Integer, Integer> map = course.getRatingDistribution();
         int key = review.getRating();
         map.put(key, map.get(key) + 1);
@@ -165,7 +168,9 @@ public class CourseController {
     }
 
     @GetMapping("/enrolled")
-    public ResponseEntity<?> getEnrolledCourse(HttpServletRequest request, @RequestParam(required = false) String keyword, @RequestParam int page) {
+    public ResponseEntity<?> getEnrolledCourse(HttpServletRequest request,
+            @RequestParam(name = "keyword", required = false) String searchkeyword,
+            @RequestParam(name = "page", defaultValue = "0") int searchpage) {
         CustomResponse response;
         String token = request.getHeader("Authorization");
 
@@ -178,19 +183,20 @@ public class CourseController {
 
         String email = jwtService.extractEmail(token);
         DokterModel dokter = dokterService.findByEmail(email);
-        if(dokter == null) {
+        if (dokter == null) {
             response = new CustomResponse(404, "User not found", null);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         } else {
             List<CourseEnrollmentResponse> data = new ArrayList<>();
             ModelMapper modelMapper = new ModelMapper();
             CourseEnrollmentResponse courseEnrollmentResponse;
-            List<CourseEnrollmentModel> listEnrollment = courseEnrollmentService.getCourseEnrollmentByUser(dokter, keyword, page);
-            for(CourseEnrollmentModel course:listEnrollment) {
+            List<CourseEnrollmentModel> listEnrollment = courseEnrollmentService.getCourseEnrollmentByUser(dokter,
+                    searchkeyword, searchpage);
+            for (CourseEnrollmentModel course : listEnrollment) {
                 courseEnrollmentResponse = modelMapper.map(course, CourseEnrollmentResponse.class);
                 data.add(courseEnrollmentResponse);
             }
-            int total = courseEnrollmentService.getTotalEnrollment(dokter, keyword);
+            int total = courseEnrollmentService.getTotalEnrollment(dokter, searchkeyword);
             Map<String, Object> responseData = new HashMap<>();
             responseData.put("enrollment", data);
             responseData.put("total", total);
@@ -217,7 +223,7 @@ public class CourseController {
         CourseModel course = courseService.getCourseBySlugName(slugName);
 
         CourseEnrollmentModel enrollment = courseEnrollmentService.getCourseEnrollment(dokter, course);
-        if(enrollment == null) {
+        if (enrollment == null) {
             response = new CustomResponse(404, "Enrollment not found", false);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         } else {
@@ -256,7 +262,7 @@ public class CourseController {
             courseEnrollment.setFinishedMaterial(0);
             courseEnrollment.setCreatedAt(LocalDateTime.now());
             courseEnrollmentService.createEnrollment(courseEnrollment);
-            for(SubCourseModel subcourse : course.getListSubCourse()) {
+            for (SubCourseModel subcourse : course.getListSubCourse()) {
                 SubCourseEnrollmentModel subCourseEnrollment = new SubCourseEnrollmentModel();
                 subCourseEnrollment.setUser(dokter);
                 subCourseEnrollment.setCourse(course);
@@ -281,7 +287,8 @@ public class CourseController {
         CourseTransactionModel transaction = courseTransactionService.getActiveTransaction(dokter, course);
 
         String activeProfile = env.getProperty("spring.profiles.active");
-        if (activeProfile == null) activeProfile = env.getProperty("spring.profiles.default");
+        if (activeProfile == null)
+            activeProfile = env.getProperty("spring.profiles.default");
         boolean isProduction = activeProfile.equals("prod");
 
         String snapToken;
@@ -350,7 +357,7 @@ public class CourseController {
             }
 
             if (transactionStatus.equals("settlement") || transactionStatus.equals("capture")) {
-                course.setTotalParticipant(course.getTotalParticipant()+1);
+                course.setTotalParticipant(course.getTotalParticipant() + 1);
                 courseService.updateCourse(course);
                 // create enrollment
                 CourseEnrollmentModel courseEnrollment = new CourseEnrollmentModel();
@@ -360,7 +367,7 @@ public class CourseController {
                 courseEnrollment.setFinishedMaterial(0);
                 courseEnrollment.setCreatedAt(LocalDateTime.parse(transactionTime, formatter));
                 courseEnrollmentService.createEnrollment(courseEnrollment);
-                for(SubCourseModel subcourse : course.getListSubCourse()) {
+                for (SubCourseModel subcourse : course.getListSubCourse()) {
                     SubCourseEnrollmentModel subCourseEnrollment = new SubCourseEnrollmentModel();
                     subCourseEnrollment.setUser(user);
                     subCourseEnrollment.setCourse(course);
@@ -368,7 +375,7 @@ public class CourseController {
                     subCourseEnrollment.setCreatedAt(LocalDateTime.parse(transactionTime, formatter));
                     subCourseEnrollment.setSubcourse(subcourse);
                     courseEnrollmentService.createSubCourseEnrollment(subCourseEnrollment);
-                    for(MaterialModel material : subcourse.getListMaterial()) {
+                    for (MaterialModel material : subcourse.getListMaterial()) {
                         MaterialEnrollmentModel materialEnrollment = new MaterialEnrollmentModel();
                         materialEnrollment.setUser(user);
                         materialEnrollment.setCourse(course);
@@ -386,7 +393,8 @@ public class CourseController {
                 transaction.setTransactionTime(LocalDateTime.parse(transactionTime, formatter));
                 transaction.setPaymentType(paymentType);
                 transaction.setTransactionStatus("waiting for payment");
-            } else if (transactionStatus.equals("expire") || transactionStatus.equals("deny") || transactionStatus.equals("cancel")) {
+            } else if (transactionStatus.equals("expire") || transactionStatus.equals("deny")
+                    || transactionStatus.equals("cancel")) {
                 transaction.setTransactionStatus("failed");
             }
             courseTransactionService.updateTransaction(transaction);
@@ -395,7 +403,8 @@ public class CourseController {
     }
 
     @PatchMapping("/tick/{materialID}")
-    public ResponseEntity<?> tickMaterialProgress(HttpServletRequest request, @PathVariable("materialID") String materialID, @RequestBody Map<String, Boolean> req) {
+    public ResponseEntity<?> tickMaterialProgress(HttpServletRequest request,
+            @PathVariable("materialID") String materialID, @RequestBody Map<String, Boolean> req) {
         CustomResponse response;
         String token = request.getHeader("Authorization");
 
@@ -412,19 +421,21 @@ public class CourseController {
         MaterialModel material = materialService.getMaterialByID(materialID);
 
         MaterialEnrollmentModel materialEnrollment = courseEnrollmentService.getMaterialEnrollment(dokter, material);
-        SubCourseEnrollmentModel subcourseEnrollment = courseEnrollmentService.getSubCourseEnrollment(dokter, materialEnrollment.getSubcourse());
-        CourseEnrollmentModel courseEnrollment = courseEnrollmentService.getCourseEnrollment(dokter, materialEnrollment.getCourse());
-        if(req.get("is_finished")) {
-            if(!materialEnrollment.isFinished()) {
+        SubCourseEnrollmentModel subcourseEnrollment = courseEnrollmentService.getSubCourseEnrollment(dokter,
+                materialEnrollment.getSubcourse());
+        CourseEnrollmentModel courseEnrollment = courseEnrollmentService.getCourseEnrollment(dokter,
+                materialEnrollment.getCourse());
+        if (req.get("is_finished")) {
+            if (!materialEnrollment.isFinished()) {
                 materialEnrollment.setFinished(true);
-                subcourseEnrollment.setFinishedMaterial(subcourseEnrollment.getFinishedMaterial()+1);
-                courseEnrollment.setFinishedMaterial(courseEnrollment.getFinishedMaterial()+1);
+                subcourseEnrollment.setFinishedMaterial(subcourseEnrollment.getFinishedMaterial() + 1);
+                courseEnrollment.setFinishedMaterial(courseEnrollment.getFinishedMaterial() + 1);
             }
         } else {
-            if(materialEnrollment.isFinished()) {
+            if (materialEnrollment.isFinished()) {
                 materialEnrollment.setFinished(false);
-                subcourseEnrollment.setFinishedMaterial(subcourseEnrollment.getFinishedMaterial()-1);
-                courseEnrollment.setFinishedMaterial(courseEnrollment.getFinishedMaterial()-1);
+                subcourseEnrollment.setFinishedMaterial(subcourseEnrollment.getFinishedMaterial() - 1);
+                courseEnrollment.setFinishedMaterial(courseEnrollment.getFinishedMaterial() - 1);
             }
         }
         courseEnrollmentService.updateMaterialEnrollment(materialEnrollment);
@@ -434,7 +445,8 @@ public class CourseController {
     }
 
     @GetMapping("/material/progress/{materialID}")
-    public ResponseEntity<?> getMaterialProgress(HttpServletRequest request, @PathVariable("materialID") String materialID) {
+    public ResponseEntity<?> getMaterialProgress(HttpServletRequest request,
+            @PathVariable("materialID") String materialID) {
         CustomResponse response;
         String token = request.getHeader("Authorization");
 
@@ -450,16 +462,17 @@ public class CourseController {
 
         MaterialModel material = materialService.getMaterialByID(materialID);
         MaterialEnrollmentModel materialEnrollment = courseEnrollmentService.getMaterialEnrollment(dokter, material);
-        Map <String, Boolean> data = new HashMap<>();
+        Map<String, Boolean> data = new HashMap<>();
         data.put("is_finished", materialEnrollment.isFinished());
         response = new CustomResponse(200, "Success", data);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @GetMapping("/history-transaction")
-    public ResponseEntity<?> getHistoryTransaction(HttpServletRequest request, @RequestParam(defaultValue = "1") int page,
-                                                   @RequestParam(name = "month", required = false) Integer month,
-                                                   @RequestParam(name = "year", required = false) Integer year) {
+    public ResponseEntity<?> getHistoryTransaction(HttpServletRequest request,
+            @RequestParam(name = "page", defaultValue = "1") int searchpage,
+            @RequestParam(name = "month", required = false) Integer searchmonth,
+            @RequestParam(name = "year", required = false) Integer searchyear) {
         CustomResponse response;
         String token = request.getHeader("Authorization");
 
@@ -474,12 +487,12 @@ public class CourseController {
         DokterModel dokter = dokterService.findByEmail(email);
 
         List<CourseTransactionModel> filteredTransactions = new ArrayList<>(dokter.getListTransaction());
-        if (month != null && year != null) {
+        if (searchmonth != null && searchyear != null) {
             filteredTransactions = filteredTransactions.stream()
                     .filter(transaction -> {
                         int transactionMonth = transaction.getTransactionTime().getMonthValue();
                         int transactionYear = transaction.getTransactionTime().getYear();
-                        return transactionMonth == month && transactionYear == year;
+                        return transactionMonth == searchmonth && transactionYear == searchyear;
                     })
                     .collect(Collectors.toList());
         }
@@ -487,7 +500,7 @@ public class CourseController {
         List<TransactionResponse> listTransactions = new ArrayList<>();
         ModelMapper modelMapper = new ModelMapper();
         TransactionResponse transactionResponse;
-        for(CourseTransactionModel transaction:filteredTransactions) {
+        for (CourseTransactionModel transaction : filteredTransactions) {
             transactionResponse = modelMapper.map(transaction, TransactionResponse.class);
             transactionResponse.setCourseName(transaction.getCourse().getName());
             transactionResponse.setCoursePrice(transaction.getCourse().getPrice());
@@ -495,11 +508,11 @@ public class CourseController {
         }
 
         int total = listTransactions.size();
-        int start = (page - 1) * 10;
+        int start = (searchpage - 1) * 10;
         int end = Math.min(start + 10, total);
 
         List<TransactionResponse> data;
-        if(start<total) {
+        if (start < total) {
             data = listTransactions.subList(start, end);
         } else {
             data = null;
@@ -514,7 +527,9 @@ public class CourseController {
     }
 
     @GetMapping("/log-activity")
-    public ResponseEntity<?> getLogActivity(HttpServletRequest request, @RequestParam(defaultValue = "1") int page, @RequestParam(name = "course", required = false) String course) {
+    public ResponseEntity<?> getLogActivity(HttpServletRequest request,
+            @RequestParam(name = "page", defaultValue = "1") int searchpage,
+            @RequestParam(name = "course", required = false) String course) {
         CustomResponse response;
         String token = request.getHeader("Authorization");
 
@@ -537,13 +552,13 @@ public class CourseController {
         }
 
         int total = filteredActivities.size();
-        int start = (page-1) * 10;
+        int start = (searchpage - 1) * 10;
         int end = Math.min(start + 10, total);
 
         filteredActivities.sort(Comparator.comparing(CourseActivityModel::getCreatedAt).reversed());
 
         List<CourseActivityModel> data;
-        if(start<total) {
+        if (start < total) {
             data = filteredActivities.subList(start, end);
         } else {
             data = null;
@@ -558,9 +573,10 @@ public class CourseController {
     }
 
     @PostMapping("/log-activity")
-    public ResponseEntity<?> postLogActivity(HttpServletRequest request, @Valid @RequestBody CourseActivityModel activity, BindingResult bindingResult) {
+    public ResponseEntity<?> postLogActivity(HttpServletRequest request,
+            @Valid @RequestBody CourseActivityModel activity, BindingResult bindingResult) {
         CustomResponse response;
-        if(bindingResult.hasErrors()) {
+        if (bindingResult.hasErrors()) {
             response = new CustomResponse(400, "Please fill the required data properly", null);
             return ResponseEntity.badRequest().body(response);
         }

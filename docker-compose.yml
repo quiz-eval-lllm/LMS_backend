@@ -1,0 +1,20 @@
+services:
+  spring-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: spring-app
+    ports:
+      - "8084:8084"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://35.238.65.121:3306/medis?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Jakarta
+      SPRING_DATASOURCE_USERNAME: medislms
+      SPRING_DATASOURCE_PASSWORD: lms12345
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_SECURITY_USER_NAME: medis
+      SPRING_SECURITY_USER_PASSWORD: medis
+      MIDTRANS_SANDBOX_CLIENT_KEY: SB-Mid-client-lnN8ObCRkKt2kySb
+      MIDTRANS_SANDBOX_SERVER_KEY: SB-Mid-server-zfu0fjTKc8Y2idaW9X-y9SmW
+      MIDTRANS_PROD_CLIENT_KEY: Mid-client-VHTCIqvrda0j2NMe
+      MIDTRANS_PROD_SERVER_KEY: Mid-server-Zu-SxUT2mq9_e1OiDfiHnAP1
+      SERVER_PORT: 8084
