@@ -61,8 +61,7 @@ public class CourseModel {
     @Column(name = "rating", nullable = false)
     private float rating;
 
-    @NotNull
-    @Column(name = "total_material", nullable = false)
+    @Column(name = "total_material", nullable = true)
     private int totalMaterial;
 
     @NotNull
