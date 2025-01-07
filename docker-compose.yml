@@ -7,7 +7,7 @@ services:
     ports:
       - "8084:8084"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://35.238.65.121:3306/medis?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Jakarta
+      SPRING_DATASOURCE_URL: jdbc:mysql://35.184.2.105:3306/medis?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Jakarta
       SPRING_DATASOURCE_USERNAME: medislms
       SPRING_DATASOURCE_PASSWORD: lms12345
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
