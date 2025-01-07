@@ -401,11 +401,11 @@ public class AdminCourseController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    private final String AUTH_TOKEN = "Token 24a213a1e3ae916f2e2fbe4c2a7ddab734861465";
-    private final String AUTH_TOKEN_2 = "Token d1716bdc2f214d240f4750df95e663d809258ad3";
+    private final String AUTH_TOKEN = "Token dc1c95c4ec04e341b3b1773e3adc7b1f15984227"; // admin token
+    private final String AUTH_TOKEN_2 = "Token 13d326c402199ae6f80832893b86ed79da2d1a68";// coordinator token
     private final Map<String, String> TOKEN_MAP = Map.ofEntries(
-            Map.entry("http://192.168.1.11", AUTH_TOKEN),
-            Map.entry("http://192.168.1.12", AUTH_TOKEN_2));
+            Map.entry("http://34.69.196.114", AUTH_TOKEN));
+            // Map.entry("http://34.134.2.166", AUTH_TOKEN_2));
 
     @PostMapping(value = "/upload-media", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> uploadMedia(
@@ -467,14 +467,14 @@ public class AdminCourseController {
 
             else {
                 ResponseEntity<String> response = restTemplate.exchange(
-                        "http://192.168.1.13:8000",
+                        "http://34.69.196.114",
                         HttpMethod.POST,
                         authorizationEntity,
                         String.class);
                 String url = response.getHeaders().getLocation().toString();
                 url = url.substring(0, url.length() - 1);
 
-                if (!url.equals("http://192.168.1.11")) {
+                if (!url.equals("http://34.69.196.114")) {
                     headers.set("Authorization", TOKEN_MAP.get(url));
                     postEntity = new HttpEntity<>(body, headers);
                     authorizationEntity = new HttpEntity<>(headers);
