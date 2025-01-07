@@ -38,6 +38,7 @@ import java.security.DigestException;
 import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.Map;
 
 @Controller
@@ -178,7 +179,11 @@ public class PageController {
                 token = jwtService.generateToken(user.getEmail(), user.getRole());
             }
 
-            return ResponseEntity.ok(new CustomResponse(200, "Success", token));
+            Map<String, String> responseMap = new HashMap<>();
+            responseMap.put("token", token);
+            responseMap.put("access_token", accessToken);
+
+            return ResponseEntity.ok(new CustomResponse(200, "Success", responseMap));
         } catch (AuthenticationException e) {
             response = new CustomResponse(400, "Incorrect email or password", null);
             return ResponseEntity.badRequest().body(response);
